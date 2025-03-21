@@ -94,14 +94,13 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
         if (tx_.executed) revert TransactionAlreadyExecuted();
         if (tx_.signatures < requiredSignatures) revert TooFewSignatures();
 
-        Transaction storage localTx = transactions[_txId];
-        localTx.executed = true; // 先标记为已执行，防止重入
+        tx_.executed = true; // 先标记为已执行，防止重入
         bool success;
         bytes memory returnData;
-        if (localTx.value > 0) {
-            (success, returnData) = tx_.destination.call{value: localTx.value}(localTx.data);
+        if (tx_.value > 0) {
+            (success, returnData) = tx_.destination.call{value: tx_.value}(tx_.data);
         } else {
-            (success, returnData) = tx_.destination.call(localTx.data);
+            (success, returnData) = tx_.destination.call(tx_.data);
         }
         require(success, "low-level call tx failed");
 
