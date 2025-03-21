@@ -22,5 +22,10 @@ interface IMultiSign {
     error InvalidRequirement();     // Invalid signature requirement value
     error NotEnoughBalance();       // Insufficient contract balance
 
+    function createProposal(address _destination, uint256 _value, bytes memory _data) external returns (bytes32 _txId);
+    function revokeProposal(bytes32 _txId) external;
+    function confirmTransaction(bytes32 _txId) external;
 
+    function addSigner(address _newSigner) external;
+    function removeSigner(address _oldSigner) external;
 }

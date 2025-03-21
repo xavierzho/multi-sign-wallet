@@ -6,7 +6,6 @@ import "../src/MultiSign.sol";
 import {MultiSigWallet} from "../src/MultiSign.sol";
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
-
 contract MultiSignTest is Test {
     ERC1967Proxy public multiSignProxy; // Use ERC1967Proxy
     MultiSigWallet public multiSignLogic; //  Declare logic contract
@@ -156,12 +155,12 @@ contract MultiSignTest is Test {
     }
 
     // Test: Owner management - addition
-    function test_AddOwner() public {
+    function test_AddSigner() public {
         address newOwner = accounts[4];
         address sender = owners[0];
 
         vm.startPrank(sender);
-        multiSignWallet.addOwner(newOwner);
+        multiSignWallet.addSigner(newOwner);
         vm.stopPrank();
 
         assertTrue(multiSignWallet.isOwner(newOwner), "Owner addition verification failed");
@@ -173,7 +172,7 @@ contract MultiSignTest is Test {
         address sender = owners[1]; // Different owner initiates removal
 
         vm.startPrank(sender);
-        multiSignWallet.removeOwner(oldOwner);
+        multiSignWallet.removeSigner(oldOwner);
         vm.stopPrank();
 
         assertFalse(multiSignWallet.isOwner(oldOwner), "Owner removal verification failed");
@@ -196,7 +195,7 @@ contract MultiSignTest is Test {
         address nonOwner = address(0x9876543210987654321098765432109876543210);
         vm.startPrank(nonOwner);
         vm.expectRevert(abi.encodeWithSignature("NotOwner()"));
-        multiSignWallet.addOwner(nonOwner); // Attempt restricted operation
+        multiSignWallet.addSigner(nonOwner); // Attempt restricted operation
         vm.stopPrank();
     }
 }

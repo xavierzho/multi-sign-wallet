@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {MultiSignStorage} from "./MultiSignStorage.sol";
+import {Initializable} from "../lib/openzeppelin-contracts/contracts/proxy/utils/Initializable.sol";
 import {IMultiSign} from "./IMultiSign.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {MultiSignStorage} from "./MultiSignStorage.sol";
+import {MultiSignStructs} from "./MultiSignStructs.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @title Multi-Signature Wallet
@@ -47,7 +49,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @param _data Transaction payload data
      * @return txId Generated transaction ID
      */
-    function createProposal(address _destination, uint256 _value, bytes memory _data) public onlyOwner returns (bytes32 txId) {
+    function createProposal(address _destination, uint256 _value, bytes memory _data) external onlyOwner returns (bytes32 txId) {
         txId = keccak256(abi.encodePacked(_destination, _value, _data, transactionCount));
         transactionCount++;
 
@@ -69,7 +71,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @dev Confirms a transaction by providing signature
      * @param _txId Transaction ID to confirm
      */
-    function confirmTransaction(bytes32 _txId) public onlyOwner {
+    function confirmTransaction(bytes32 _txId) external onlyOwner {
         Transaction storage tx_ = transactions[_txId];
         if (tx_.destination == address(0)) revert TransactionNotFound();
         if (tx_.executed) revert TransactionAlreadyExecuted();
@@ -119,7 +121,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @dev Revokes a signature from a pending transaction
      * @param _txId Transaction ID to revoke
      */
-    function revokeProposal(bytes32 _txId) public onlyOwner {
+    function revokeProposal(bytes32 _txId) external onlyOwner {
         Transaction storage tx_ = transactions[_txId];
         if (tx_.destination == address(0)) revert TransactionNotFound();
         if (tx_.executed) revert TransactionAlreadyExecuted();
@@ -134,7 +136,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @dev Adds a new owner to the wallet
      * @param _newOwner Address of the new owner
      */
-    function addOwner(address _newOwner) public onlyOwner {
+    function addSigner(address _newOwner) external onlyOwner {
         if (_newOwner == address(0)) revert("Invalid zero address");
         if (isOwner[_newOwner]) revert AlreadyOwner();
 
@@ -151,23 +153,23 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
 
     /**
      * @dev Removes an existing owner
-     * @param _oldOwner Address of the owner to remove
+     * @param _oldSigner Address of the owner to remove
      */
-    function removeOwner(address _oldOwner) public onlyOwner {
-        if (!isOwner[_oldOwner]) revert NotOwner();
+    function removeSigner(address _oldSigner) external onlyOwner {
+        if (!isOwner[_oldSigner]) revert NotOwner();
         if (owners.length == 1) revert("Cannot remove last owner");
 
-        isOwner[_oldOwner] = false;
+        isOwner[_oldSigner] = false;
 
         // Remove from owners array
         for (uint256 i = 0; i < owners.length; i++) {
-            if (owners[i] == _oldOwner) {
+            if (owners[i] == _oldSigner) {
                 owners[i] = owners[owners.length - 1];
                 owners.pop();
                 break;
             }
         }
-        emit OwnerRemoved(_oldOwner);
+        emit OwnerRemoved(_oldSigner);
 
         // Auto-adjust requirement if needed
         if (owners.length < requiredSignatures) {
@@ -180,7 +182,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @dev Updates the required signature threshold
      * @param _newRequirement New signature requirement
      */
-    function changeRequirement(uint256 _newRequirement) public onlyOwner {
+    function changeRequirement(uint256 _newRequirement) external onlyOwner {
         if (_newRequirement == 0 || _newRequirement > owners.length) revert InvalidRequirement();
         requiredSignatures = _newRequirement;
         emit RequirementChanged(_newRequirement);
@@ -192,6 +194,14 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      */
     function getBalance() public view returns (uint256) {
         return address(this).balance;
+    }
+
+    /**
+     * @dev Returns contract's {token} balance
+     * @return balance of Current token balance with decimal
+    */
+    function getTokenBalance(address token) external view returns (uint256 balance) {
+        return IERC20(token).balanceOf(address(this));
     }
 
     /**
