@@ -12,7 +12,7 @@ contract MultiSignTest is Test {
     MultiSigWallet public multiSignWallet;
     address[] public accounts;
     address[] public owners;
-    uint256 public requiredSignatures;
+    uint128 public requiredSignatures;
     address public admin; // Add admin
 
     function setUp() public {
@@ -31,7 +31,7 @@ contract MultiSignTest is Test {
 
         // Deploy the proxy, passing the logic contract address and initialization data
         bytes memory initializeData = abi.encodeWithSignature(
-            "initialize(address[],uint256)",
+            "initialize(address[],uint128)",
             owners,
             requiredSignatures
         );
@@ -180,7 +180,7 @@ contract MultiSignTest is Test {
 
     // Test: Signature threshold adjustment
     function test_ChangeRequirement() public {
-        uint256 newRequirement = 1;
+        uint128 newRequirement = 1;
         address sender = owners[0];
 
         vm.startPrank(sender);

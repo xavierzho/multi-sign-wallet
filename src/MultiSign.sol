@@ -20,7 +20,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @param _requiredSignatures Minimum signatures required to execute transactions
      */
 
-    function initialize(address[] memory _owners, uint256 _requiredSignatures) public initializer {
+    function initialize(address[] memory _owners, uint128 _requiredSignatures) public initializer {
         // Validate owners list
         require(_owners.length > 0, "Empty owners list");
         require(_requiredSignatures > 0 && _requiredSignatures <= _owners.length, "Invalid signature requirement");
@@ -146,7 +146,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
 
         // Auto-adjust requirement if needed
         if (owners.length < requiredSignatures) {
-            requiredSignatures = owners.length;
+            requiredSignatures = uint128(owners.length);
             emit RequirementChanged(requiredSignatures);
         }
     }
@@ -173,7 +173,7 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
 
         // Auto-adjust requirement if needed
         if (owners.length < requiredSignatures) {
-            requiredSignatures = owners.length;
+            requiredSignatures = uint128(owners.length);
             emit RequirementChanged(requiredSignatures);
         }
     }
@@ -182,8 +182,8 @@ contract MultiSigWallet is Initializable, MultiSignStorage, IMultiSign {
      * @dev Updates the required signature threshold
      * @param _newRequirement New signature requirement
      */
-    function changeRequirement(uint256 _newRequirement) external onlyOwner {
-        if (_newRequirement == 0 || _newRequirement > owners.length) revert InvalidRequirement();
+    function changeRequirement(uint128 _newRequirement) external onlyOwner {
+        if (_newRequirement == 0 || _newRequirement > uint128(owners.length)) revert InvalidRequirement();
         requiredSignatures = _newRequirement;
         emit RequirementChanged(_newRequirement);
     }
